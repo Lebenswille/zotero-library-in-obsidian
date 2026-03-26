@@ -5060,6 +5060,9 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   activateLibraryViewInSidebar() {
     return __async(this, null, function* () {
+      if (!import_obsidian6.Platform.isDesktopApp) {
+        return yield this.activateLibraryViewInTab();
+      }
       let leaf = this.app.workspace.getRightLeaf(false);
       if (leaf == null) {
         leaf = this.app.workspace.getRightLeaf(true);
@@ -5084,7 +5087,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return __async(this, null, function* () {
       let leaf = this.findExistingLibraryTabLeaf();
       if (leaf == null) {
-        leaf = this.app.workspace.getLeaf("tab");
+        leaf = import_obsidian6.Platform.isDesktopApp ? this.app.workspace.getLeaf("tab") : this.app.workspace.getLeaf(true);
       }
       yield leaf.setViewState({
         type: ZOTERO_LIBRARY_VIEW_TYPE,
