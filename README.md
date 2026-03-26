@@ -70,6 +70,15 @@ You can open the library view in several ways:
 - `obsidian://zotero-library?vault=Research&view=tab`
 - `obsidian://zotero-library?vault=Research&view=sidebar`
 
+## Note-Page Header Button
+
+The plugin can add a header button to eligible literature notes so you can jump back to the Library View directly from the note page.
+
+- Open a note created by this plugin or a note that includes the expected `Zotero Library` frontmatter field.
+- Look for the library icon in the note header actions area.
+- Click it to open the Zotero Library View in a normal tab.
+- This is useful when you are reading or editing a literature note and want to return to the library entry quickly.
+
 ## Importing your Zotero Library into Obsidian
 
 To import your references and notes from Zotero, export your library as a Better BibTeX JSON file and save it inside your vault. Then follow these steps:
@@ -88,8 +97,7 @@ To import your references and notes from Zotero, export your library as a Better
 
 The plugin includes the original note-generation workflow together with the new library view workflow:
 
-- **Create/Update Literature Note**: when you select this command you will be prompted to chose one of references from the library you have imported. If the reference has not been imported yet in the specified folder, a new note will be generated. If a note already exists, its content will be updated wi
-without over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
+- **Create/Update Literature Note**: when you select this command you will be prompted to chose one of references from the library you have imported. If the reference has not been imported yet in the specified folder, a new note will be generated. If a note already exists, its content will be updated without over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
 
 ![](/images/SelectCommandExample.png)
 
@@ -151,7 +159,6 @@ By default the plugin will export both the metadata and the notes stored in Zote
   - {{Yellow}}, {{Red}}, {{Green}}, {{Black}}, {{White}}, {{Gray}}, {{Cyan}}, {{Magenta}}, {{Orange}}: all the highlights of a certain colour
   - {{UserNotes}}: notes manually created within Zotero
   - {{Images}}: all the images extracted via the Zotero PDF Reader
-
 - It is also possible to wrap the placeholders into [[ ]] in order to create notes or to preface them with a tag(#). You can also preface a field with :: in order to create Dataview fields.
 - **Missing Fields**: Fields that are present in the template but missing in the entry are deleted by default. This can be changed in the settings.
 
