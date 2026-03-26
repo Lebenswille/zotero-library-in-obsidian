@@ -102,10 +102,21 @@
 }
 
 .zotero-library-sort-label {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px;
   font-weight: 600;
+}
+
+.zotero-library-sort-text {
+  flex: 1 1 auto;
+}
+
+.zotero-library-sort-indicator {
+  flex: 0 0 1em;
+  text-align: right;
 }
 
 .zotero-library-table tr:hover td {

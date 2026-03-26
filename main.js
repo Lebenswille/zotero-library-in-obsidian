@@ -4591,8 +4591,12 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
       visibleColumns.forEach((label) => {
         const th = headRow.createEl("th");
         th.addClass("zotero-library-sortable");
-        const indicator = this.sortColumn === label ? this.sortDirection === "asc" ? " ↑" : " ↓" : "";
-        const headerLabel = th.createSpan({ cls: "zotero-library-sort-label", text: label + indicator });
+        const headerLabel = th.createDiv({ cls: "zotero-library-sort-label" });
+        headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
+        headerLabel.createSpan({
+          cls: "zotero-library-sort-indicator",
+          text: this.sortColumn === label ? this.sortDirection === "asc" ? "↑" : "↓" : ""
+        });
         th.setAttr("role", "button");
         th.setAttr("tabindex", "0");
         const sortHandler = () => {
