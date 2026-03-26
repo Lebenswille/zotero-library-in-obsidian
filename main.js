@@ -5071,12 +5071,15 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   activateLibraryViewInSidebar() {
     return __async(this, null, function* () {
-      if (!import_obsidian6.Platform.isDesktopApp) {
-        return yield this.activateLibraryViewInTab();
+      let leaf = this.findExistingLibrarySidebarLeaf();
+      if (leaf == null && typeof this.app.workspace.getRightLeaf === "function") {
+        leaf = this.app.workspace.getRightLeaf(false);
       }
-      let leaf = this.app.workspace.getRightLeaf(false);
-      if (leaf == null) {
+      if (leaf == null && typeof this.app.workspace.getRightLeaf === "function") {
         leaf = this.app.workspace.getRightLeaf(true);
+      }
+      if (leaf == null) {
+        leaf = import_obsidian6.Platform.isDesktopApp ? this.app.workspace.getLeaf("tab") : this.app.workspace.getLeaf(true);
       }
       yield leaf.setViewState({
         type: ZOTERO_LIBRARY_VIEW_TYPE,
@@ -5084,6 +5087,15 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       });
       this.app.workspace.revealLeaf(leaf);
     });
+  }
+  findExistingLibrarySidebarLeaf() {
+    const leaves = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
+    for (const leaf of leaves) {
+      if (typeof leaf.getRoot === "function" && leaf.getRoot() === this.app.workspace.rightSplit) {
+        return leaf;
+      }
+    }
+    return null;
   }
   findExistingLibraryTabLeaf() {
     const leaves = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
