@@ -10,16 +10,16 @@ Compared with the original bibnotes project, this fork adds a Zotero-library-fir
 
 - a dedicated **Library View** that reads your exported Better BibTeX JSON directly
 - open the library in a **normal tab** or in the **right sidebar**
-- **custom Obsidian URI support** for opening the library view from links:
-  - `obsidian://zotero-library?vault=YourVault&view=tab`
-  - `obsidian://zotero-library?vault=YourVault&view=sidebar`
+- **custom Obsidian URI support** for opening the library view from links
+- `obsidian://zotero-library?vault=YourVault&view=tab`
+- `obsidian://zotero-library?vault=YourVault&view=sidebar`
 - **automatic sync when `My Library.json` changes**
 - **configurable visible columns** in the library table, with custom ordering
 - **click-to-sort** table headers
-- **note-aware library entries**:
-  - clicking `Notes` opens the corresponding literature note
-  - if the note does not exist, it is created from the current template and then opened automatically
-  - if the note was deleted, it can be recreated on demand from the library view
+- **note-aware library entries**
+- clicking `Notes` opens the corresponding literature note
+- if the note does not exist, it is created from the current template and then opened automatically
+- if the note was deleted, it can be recreated on demand from the library view
 - a **note-page header button** that opens the library view from eligible reference notes
 - updated branding, commands, and documentation for the forked project
 
@@ -66,9 +66,9 @@ You can open the library view in several ways:
 
 - from the command palette
 - from supported note-page header actions
-- from an Obsidian URI link such as:
-  - `obsidian://zotero-library?vault=Research&view=tab`
-  - `obsidian://zotero-library?vault=Research&view=sidebar`
+- from an Obsidian URI link such as
+- `obsidian://zotero-library?vault=Research&view=tab`
+- `obsidian://zotero-library?vault=Research&view=sidebar`
 
 ## Importing your Zotero Library into Obsidian
 
@@ -89,8 +89,7 @@ To import your references and notes from Zotero, export your library as a Better
 The plugin includes the original note-generation workflow together with the new library view workflow:
 
 - **Create/Update Literature Note**: when you select this command you will be prompted to chose one of references from the library you have imported. If the reference has not been imported yet in the specified folder, a new note will be generated. If a note already exists, its content will be updated wi
-
-thout over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
+without over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
 
 ![](/images/SelectCommandExample.png)
 
@@ -149,7 +148,7 @@ By default the plugin will export both the metadata and the notes stored in Zote
   - {{collections}}: collections/folders where the entry is located
   - {{collectionsParent}}: collections/folders where the entry is located, plus the parent folders to these
   - {{PDFNotes}}: all the highlights, comments, and images extracted from the PDF, in the order in which they appear
-  - {{Yellow}, {{Red}}, {{Green}}, {{Black}, {{White}}, {{Gray}}, {{Cyan}}, {{Magenta}}, {{Orange}}: all the highlights of a certain colour
+  - {{Yellow}}, {{Red}}, {{Green}}, {{Black}}, {{White}}, {{Gray}}, {{Cyan}}, {{Magenta}}, {{Orange}}: all the highlights of a certain colour
   - {{UserNotes}}: notes manually created within Zotero
   - {{Images}}: all the images extracted via the Zotero PDF Reader
 
@@ -191,6 +190,7 @@ It is possible to perform additional transformations to designated highlighted s
 ![](/images/exampleKeyword.png)
 
 - **Todo**: Transform the highlight or comments into a task ("- [ ]").
+
 ![](/images/exampleToDo.png)
 
 - **Custom Text**: Add custom text before or after a specific highlight
