@@ -3950,7 +3950,12 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const { settings } = plugin;
     containerEl.empty();
     containerEl.createEl("h1", { text: "Zotero Library in Obsidian" });
-    containerEl.createEl("a", { text: "Created by Lebenswille", href: "" });
+    const authorLink = containerEl.createEl("a", {
+      text: "Created by Lebenswille",
+      href: "https://github.com/Lebenswille/zotero-library-in-obsidian"
+    });
+    authorLink.setAttr("target", "_blank");
+    authorLink.setAttr("rel", "noopener noreferrer");
     containerEl.createEl("h2", { text: "Import Library" });
     const importLibrary = containerEl.createEl("details");
     importLibrary.setAttribute("open", "");
