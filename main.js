@@ -5107,6 +5107,16 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       return null;
     });
   }
+  findOpenNoteLeaf(noteFile) {
+    const leaves = this.app.workspace.getLeavesOfType("markdown");
+    for (const leaf of leaves) {
+      var _a;
+      if (((_a = leaf.view) == null ? void 0 : _a.file) === noteFile) {
+        return leaf;
+      }
+    }
+    return null;
+  }
   openOrCreateLibraryEntryNote(entry) {
     return __async(this, null, function* () {
       let noteFile = this.app.vault.getAbstractFileByPath(entry.notePathShort) || this.app.vault.getFileByPath(entry.notePathShort);
@@ -5117,6 +5127,12 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       entry.noteFile = noteFile;
       this.refreshLibraryViews();
       if (noteFile != null) {
+        const existingLeaf = this.findOpenNoteLeaf(noteFile);
+        if (existingLeaf != null) {
+          this.app.workspace.setActiveLeaf(existingLeaf, { focus: true });
+          this.app.workspace.revealLeaf(existingLeaf);
+          return;
+        }
         yield this.app.workspace.getLeaf(true).openFile(noteFile);
       }
     });
