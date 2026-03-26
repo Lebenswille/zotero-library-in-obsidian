@@ -1,11 +1,11 @@
 {
-  "id": "bibnotes",
+  "id": "zotero-library-in-obsidian",
   "name": "Zotero Library in Obsidian",
   "version": "0.9.219",
   "minAppVersion": "0.12.0",
   "description": "View and manage your Zotero library inside Obsidian.",
   "author": "Lebenswille",
   "authorUrl": "",
-  "isDesktopOnly": true,
+  "isDesktopOnly": false,
   "repo": "Lebenswille/zotero-library-in-obsidian"
 }
