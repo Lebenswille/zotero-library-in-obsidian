@@ -2190,12 +2190,12 @@ var updateLibrary = class extends import_obsidian2.Modal {
     this.plugin = plugin;
   }
   onOpen() {
-    console.log("Updating Zotero library");
-    const data = this.plugin.loadBibData();
-    if (data == null) {
-      return;
-    }
     return __async(this, null, function* () {
+      console.log("Updating Zotero library");
+      const data = yield this.plugin.loadBibData();
+      if (data == null) {
+        return;
+      }
       const bibtexArray = yield this.plugin.updateLibraryEntries(data);
       new import_obsidian2.Notice("Updated " + bibtexArray.length + " entries");
     });
@@ -4547,7 +4547,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
       const container = this.contentEl;
       container.empty();
       container.addClass("zotero-library-view");
-      const data = this.plugin.loadBibData(true);
+      const data = yield this.plugin.loadBibData(true);
       if (data == null) {
         container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the BibNotes settings." });
         return;
@@ -4942,7 +4942,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       }
       this.isAutoImportRunning = true;
       try {
-        const data = this.loadBibData();
+        const data = yield this.loadBibData();
         if (data == null) {
           return;
         }
@@ -4960,15 +4960,26 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   loadBibData() {
     let silent = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
-    const jsonPath = this.app.vault.adapter.getBasePath() + "/" + this.settings.bibPath;
-    if (!fs.existsSync(jsonPath)) {
-      if (!silent) {
-        new import_obsidian6.Notice("No BetterBibTex Json file found at " + jsonPath);
+    return __async(this, null, function* () {
+      const bibPath = (0, import_obsidian6.normalizePath)(this.settings.bibPath);
+      try {
+        const exists = yield this.app.vault.adapter.exists(bibPath);
+        if (!exists) {
+          if (!silent) {
+            new import_obsidian6.Notice("No BetterBibTex Json file found at " + bibPath);
+          }
+          return void 0;
+        }
+        const rawdata = yield this.app.vault.adapter.read(bibPath);
+        return JSON.parse(rawdata);
+      } catch (error) {
+        console.log(error);
+        if (!silent) {
+          new import_obsidian6.Notice("Failed to read BetterBibTex Json file");
+        }
+        return void 0;
       }
-      return void 0;
-    }
-    const rawdata = fs.readFileSync(jsonPath);
-    return JSON.parse(rawdata.toString());
+    });
   }
   buildLibraryEntries(data) {
     const divider = normalizeDivider(this.settings.multipleFieldsDivider);
