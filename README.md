@@ -56,8 +56,9 @@ The custom Library View is the main addition of this fork.
 - It can be opened in a tab or in the sidebar.
 - It supports configurable columns such as `Notes`, `Year`, `Type`, `Title`, `Authors`, `Publication`, `Tags`, `Added`, and `Actions`.
 - Column order can be customized in plugin settings.
+- The search box can search across the full Better BibTeX JSON record for each entry, not only the currently visible columns.
 - Clicking a sortable table header changes the sorting order.
-- Clicking the leftmost `Notes` entry opens the corresponding note, or creates it from the current template if it does not exist yet.
+- Clicking the leftmost `Obsidian Notes` entry opens the corresponding note, or creates it from the current template if it does not exist yet.
 - The view refreshes when the exported library JSON changes.
 
 ## Opening The Library View

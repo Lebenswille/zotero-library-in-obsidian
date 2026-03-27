@@ -1448,10 +1448,12 @@ function canConvert(input) {
 // src/constants.ts
 var templatePlain = "# {{title}}\n\n## Metadata\n- **CiteKey**: {{citekey}}\n - **Type**: {{itemType}}\n - **Title**: {{title}}, \n - **Author**: {{author}};  \n- **Editor**: {{editor}};  \n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}},\n- **Location**: {{place}},\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}, \n- **Volume**: {{volume}},\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n\n## Abstract\n{{abstractNote}}\n## Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n\n## Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
 var templateAdmonition = "# {{title}}\n\n``` ad-info\ntitle: Metadata\n- **CiteKey**: {{citekey}}\n- **Type**: {{itemType}}\n- **Author**: {{author}}\n- **Editor**: {{editor}}\n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}}\n- **Location**: {{place}}\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}\n- **Volume**: {{volume}}\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n```\n```ad-quote\ntitle: Abstract\n{{abstractNote}}\n```\n```ad-abstract\ntitle: Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n```\n```ad-note\ntitle: Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n```\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
+var BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"];
+var EXCLUDED_DYNAMIC_LIBRARY_FIELDS = /* @__PURE__ */ new Set(["citationKey", "date", "itemType", "title", "creators", "publicationTitle", "tags", "dateAdded", "url", "select", "uri"]);
 var DEFAULT_SETTINGS = {
   bibPath: "",
   autoImportOnBibChange: false,
-  libraryViewColumns: ["Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"],
+  libraryViewColumns: BUILT_IN_LIBRARY_COLUMNS.slice(),
   templateContent: templatePlain,
   templatePath: "",
   templateType: "Admonition",
@@ -2019,6 +2021,68 @@ function createNotePathShort(selectedEntry, exportTitle, exportPath) {
   exportTitle = exportTitle.replace("{{date}}", selectedEntry.year);
   exportTitle = exportTitle.replace(/[/\\?%*:|"<>]/g, "");
   return (0, import_obsidian.normalizePath)(`${exportPath}/${exportTitle}.md`);
+}
+function formatLibraryFieldValue(value, divider) {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => formatLibraryFieldValue(item, divider)).filter((item) => item !== "").join(divider);
+  }
+  if (typeof value === "object") {
+    if (typeof value.firstName === "string" || typeof value.lastName === "string") {
+      return [value.firstName || "", value.lastName || ""].join(" ").trim();
+    }
+    const candidateKeys = ["tag", "name", "title", "label", "path", "key", "citationKey", "itemKey", "uri", "url"];
+    for (const key of candidateKeys) {
+      if (typeof value[key] === "string" || typeof value[key] === "number") {
+        return String(value[key]);
+      }
+    }
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return "";
+    }
+  }
+  return "";
+}
+function discoverLibraryFieldNames(data) {
+  if (data == null || !Array.isArray(data.items)) {
+    return [];
+  }
+  const fields = /* @__PURE__ */ new Set();
+  for (const item of data.items) {
+    if (item == null || typeof item !== "object") {
+      continue;
+    }
+    for (const key of Object.keys(item)) {
+      if (EXCLUDED_DYNAMIC_LIBRARY_FIELDS.has(key)) {
+        continue;
+      }
+      fields.add(key);
+    }
+  }
+  return Array.from(fields).sort((firstField, secondField) => firstField.localeCompare(secondField));
+}
+function collectLibrarySearchValues(value, results) {
+  if (value == null) {
+    return;
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    results.push(String(value));
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectLibrarySearchValues(item, results));
+    return;
+  }
+  if (typeof value === "object") {
+    Object.values(value).forEach((item) => collectLibrarySearchValues(item, results));
+  }
 }
 function replaceTagList(selectedEntry, arrayExtractedKeywords, metadata, divider) {
   selectedEntry.zoteroTags = [];
@@ -3964,6 +4028,8 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       console.log("Path Bib: " + value);
       settings.bibPath = value;
       yield plugin.saveSettings();
+      yield plugin.refreshDiscoveredLibraryFields(true);
+      this.display();
     })));
     new import_obsidian5.Setting(importLibrary).setName("Auto Import on Json Change").setDesc("Automatically update related notes when the BetterBibTex JSON file changes.").addToggle((text) => text.setValue(settings.autoImportOnBibChange).onChange((value) => __async(this, null, function* () {
       settings.autoImportOnBibChange = value;
@@ -3980,7 +4046,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       libraryColumnsContainer.empty();
       const availableColumns = plugin.getAvailableLibraryViewColumns();
       const currentColumns = plugin.getLibraryViewColumns().slice();
-    new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Choose which columns appear in the Zotero Library in Obsidian view, and reorder them.");
+    new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Choose which columns appear in the Zotero Library in Obsidian view, reorder them, and include fields discovered automatically from your BetterBibTex JSON.");
       currentColumns.forEach((column, index) => {
         new import_obsidian5.Setting(libraryColumnsContainer).setName(`Column ${index + 1}`).addDropdown((dropdown) => {
           availableColumns.forEach((option) => {
@@ -4564,10 +4630,6 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
         type: "search",
         placeholder: "Search cite key, title, authors, tags..."
       });
-      const refreshButton = controls.createEl("button", {
-        text: "Refresh",
-        cls: "mod-cta"
-      });
       const stats = container.createDiv({ cls: "zotero-library-stats" });
       const years = entries.map((entry) => Number(entry.year)).filter((year) => Number.isFinite(year));
       const tags = [...new Set(entries.flatMap((entry) => entry.tagsArray))];
@@ -4625,7 +4687,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
         filteredEntries.forEach((entry) => {
           const row = tbody.insertRow();
           visibleColumns.forEach((column) => {
-            if (column === "Notes") {
+            if (column === "Obsidian Notes") {
               const citeCell = row.insertCell();
               const noteLink = citeCell.createEl("a", { text: entry.citeKey, href: "#" });
               noteLink.addEventListener("click", (event) => {
@@ -4683,15 +4745,12 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
               }
               return;
             }
-            row.insertCell().setText("");
+            row.insertCell().setText((entry.customFieldValues || {})[column] || "");
           });
         });
       };
       searchInput.addEventListener("input", () => {
         renderRows(searchInput.value);
-      });
-      refreshButton.addEventListener("click", () => {
-        this.renderLibrary();
       });
       renderRows("");
     });
@@ -4701,6 +4760,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
+      yield this.refreshDiscoveredLibraryFields(true);
       this.autoImportDebounce = void 0;
       this.libraryViewRefreshDebounce = void 0;
       this.isAutoImportRunning = false;
@@ -4773,6 +4833,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   loadSettings() {
     return __async(this, null, function* () {
       this.settings = Object.assign({}, DEFAULT_SETTINGS, yield this.loadData());
+      this.discoveredLibraryFields = [];
     });
   }
   saveSettings() {
@@ -4825,10 +4886,11 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     if (parsed.length > 0) {
       return parsed;
     }
-    return availableColumns.slice();
+    return BUILT_IN_LIBRARY_COLUMNS.slice();
   }
   getAvailableLibraryViewColumns() {
-    return ["Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"];
+    const configuredColumns = Array.isArray(this.settings.libraryViewColumns) ? this.settings.libraryViewColumns : typeof this.settings.libraryViewColumns === "string" ? this.settings.libraryViewColumns.split(",").map((column) => column.trim()).filter((column) => column !== "") : [];
+    return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || []).concat(configuredColumns)));
   }
   getLibraryViewColumns() {
     const configuredColumns = this.settings.libraryViewColumns;
@@ -4844,7 +4906,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     const directionFactor = direction === "desc" ? -1 : 1;
     let firstValue = "";
     let secondValue = "";
-    if (column === "Notes") {
+    if (column === "Obsidian Notes") {
       firstValue = firstEntry.citeKey;
       secondValue = secondEntry.citeKey;
     } else if (column === "Year") {
@@ -4871,6 +4933,9 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     } else if (column === "Actions") {
       firstValue = firstEntry.noteFile != null ? "0" : "1";
       secondValue = secondEntry.noteFile != null ? "0" : "1";
+    } else {
+      firstValue = (firstEntry.customFieldValues || {})[column] || "";
+      secondValue = (secondEntry.customFieldValues || {})[column] || "";
     }
     const normalizedFirst = String(firstValue || "").toLowerCase();
     const normalizedSecond = String(secondValue || "").toLowerCase();
@@ -4968,18 +5033,48 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           if (!silent) {
             new import_obsidian6.Notice("No BetterBibTex Json file found at " + bibPath);
           }
+          this.discoveredLibraryFields = [];
           return void 0;
         }
         const rawdata = yield this.app.vault.adapter.read(bibPath);
-        return JSON.parse(rawdata);
+        const data = JSON.parse(rawdata);
+        this.discoveredLibraryFields = discoverLibraryFieldNames(data);
+        return data;
       } catch (error) {
         console.log(error);
         if (!silent) {
           new import_obsidian6.Notice("Failed to read BetterBibTex Json file");
         }
+        this.discoveredLibraryFields = [];
         return void 0;
       }
     });
+  }
+  refreshDiscoveredLibraryFields() {
+    let silent = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+    return __async(this, null, function* () {
+      yield this.loadBibData(silent);
+    });
+  }
+  resolveLibraryEntryNoteFile(selectedEntry, notePathShort) {
+    const normalizedPath = (0, import_obsidian6.normalizePath)(notePathShort).replace(/^\/+/, "");
+    const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath) || this.app.vault.getFileByPath(normalizedPath);
+    if (directMatch != null) {
+      return directMatch;
+    }
+    const exportPath = (0, import_obsidian6.normalizePath)(this.settings.exportPath || "").replace(/^\/+/, "");
+    const expectedBasename = `@${selectedEntry.citationKey}`;
+    const markdownFiles = this.app.vault.getMarkdownFiles();
+    for (const file of markdownFiles) {
+      const normalizedFilePath = (0, import_obsidian6.normalizePath)(file.path).replace(/^\/+/, "");
+      if (exportPath !== "" && !normalizedFilePath.startsWith(exportPath + "/")) {
+        continue;
+      }
+      if (file.basename === expectedBasename) {
+        return file;
+      }
+    }
+    return null;
   }
   buildLibraryEntries(data) {
     const divider = normalizeDivider(this.settings.multipleFieldsDivider);
@@ -4995,13 +5090,19 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       if (selectedEntry.hasOwnProperty("date")) {
         selectedEntry.year = selectedEntry.date.match(/\d\d\d\d/gm) + "";
       }
-      const notePathShort = createNotePathShort(selectedEntry, this.settings.exportTitle, this.settings.exportPath);
-      const noteFile = this.app.vault.getAbstractFileByPath(notePathShort);
+      const notePathShort = (0, import_obsidian6.normalizePath)(createNotePathShort(selectedEntry, this.settings.exportTitle, this.settings.exportPath)).replace(/^\/+/, "");
+      const noteFile = this.resolveLibraryEntryNoteFile(selectedEntry, notePathShort);
       const tagsArray = getTagsForLibraryEntry(selectedEntry);
       const authors = formatPrimaryCreatorListForLibrary(selectedEntry.creators || [], divider, this.settings.nameFormat);
       const year = normalizeYearForLibrary(selectedEntry.date);
       const publication = selectedEntry.publicationTitle || "";
       const title = selectedEntry.title || "";
+      const customFieldValues = {};
+      const searchValues = [];
+      collectLibrarySearchValues(selectedEntry, searchValues);
+      (this.discoveredLibraryFields || []).forEach((field) => {
+        customFieldValues[field] = formatLibraryFieldValue(selectedEntry[field], divider);
+      });
       entries.push({
         citeKey: selectedEntry.citationKey,
         year,
@@ -5019,15 +5120,8 @@ var MyPlugin = class extends import_obsidian6.Plugin {
         rawData: data,
         notePathShort,
         noteFile,
-        searchText: [
-          selectedEntry.citationKey,
-          year,
-          title,
-          authors,
-          publication,
-          tagsArray.join(" "),
-          selectedEntry.DOI || ""
-        ].join(" ").toLowerCase()
+        customFieldValues,
+        searchText: searchValues.join(" ").toLowerCase()
       });
     }
     entries.sort((firstEntry, secondEntry) => secondEntry.dateAdded.localeCompare(firstEntry.dateAdded) || firstEntry.citeKey.localeCompare(secondEntry.citeKey));
