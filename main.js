@@ -4650,15 +4650,22 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
       const thead = table.createTHead();
       const headRow = thead.insertRow();
       const visibleColumns = this.plugin.getLibraryViewColumns();
+      const sortIndicators = {};
+      const updateSortIndicators = () => {
+        Object.entries(sortIndicators).forEach(([column, indicator]) => {
+          indicator.setText(this.sortColumn === column ? this.sortDirection === "asc" ? "↑" : "↓" : "");
+        });
+      };
       visibleColumns.forEach((label) => {
         const th = headRow.createEl("th");
         th.addClass("zotero-library-sortable");
         const headerLabel = th.createDiv({ cls: "zotero-library-sort-label" });
         headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
-        headerLabel.createSpan({
+        const indicator = headerLabel.createSpan({
           cls: "zotero-library-sort-indicator",
           text: this.sortColumn === label ? this.sortDirection === "asc" ? "↑" : "↓" : ""
         });
+        sortIndicators[label] = indicator;
         th.setAttr("role", "button");
         th.setAttr("tabindex", "0");
         const sortHandler = () => {
@@ -4668,7 +4675,8 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
             this.sortColumn = label;
             this.sortDirection = label === "Added" ? "desc" : "asc";
           }
-          this.renderLibrary();
+          updateSortIndicators();
+          renderRows(searchInput.value);
         };
         th.addEventListener("click", sortHandler);
         th.addEventListener("keydown", (event) => {
@@ -4752,6 +4760,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
       searchInput.addEventListener("input", () => {
         renderRows(searchInput.value);
       });
+      updateSortIndicators();
       renderRows("");
     });
   }
@@ -5239,13 +5248,16 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   openOrCreateLibraryEntryNote(entry) {
     return __async(this, null, function* () {
+      const hadExistingNote = entry.noteFile != null || this.app.vault.getAbstractFileByPath(entry.notePathShort) != null || this.app.vault.getFileByPath(entry.notePathShort) != null;
       let noteFile = this.app.vault.getAbstractFileByPath(entry.notePathShort) || this.app.vault.getFileByPath(entry.notePathShort);
       if (noteFile == null && entry.rawEntry != void 0 && entry.rawData != void 0) {
         this.createNote(entry.rawEntry, entry.rawData);
         noteFile = yield this.waitForVaultFile(entry.notePathShort);
       }
       entry.noteFile = noteFile;
-      this.refreshLibraryViews();
+      if (!hadExistingNote && noteFile != null) {
+        this.refreshLibraryViews();
+      }
       if (noteFile != null) {
         const existingLeaf = this.findOpenNoteLeaf(noteFile);
         if (existingLeaf != null) {
