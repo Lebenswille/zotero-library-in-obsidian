@@ -40,7 +40,7 @@ Compared with the original bibnotes project, this fork adds a Zotero-library-fir
 4. Let the plugin generate and update literature notes from your template.
 5. Use the Library View to search, sort, and open notes directly inside Obsidian.
 
-![](/images/ExampleNote.jpg)
+![](images/library-with-note.png)
 
 ## Installation
 
@@ -61,6 +61,12 @@ The custom Library View is the main addition of this fork.
 - Clicking the leftmost `Obsidian Notes` entry opens the corresponding note, or creates it from the current template if it does not exist yet.
 - The view refreshes when the exported library JSON changes.
 
+![](images/library-view-overview.png)
+
+Search across your entire imported library JSON:
+
+![](images/library-view-search.png)
+
 ## Opening The Library View
 
 You can open the library view in several ways:
@@ -80,6 +86,8 @@ The plugin can add a header button to eligible literature notes so you can jump 
 - Click it to open the Zotero Library View in a normal tab.
 - This is useful when you are reading or editing a literature note and want to return to the library entry quickly.
 
+![](images/note-header-button.png)
+
 ## Importing your Zotero Library into Obsidian
 
 To import your references and notes from Zotero, export your library as a Better BibTeX JSON file and save it inside your vault. Then follow these steps:
@@ -90,17 +98,13 @@ To import your references and notes from Zotero, export your library as a Better
 - select "Export Notes" if you would like to import into Obsidian the annotation.
 - *(Optional)* select "Keep updated" to automatically update the exported library once an entry is added/deleted/amended
 - save the BetterBibTex JSON file in a folder **within** your Obsidian Vault
-- in the plugin settings within Obsidian add the relative path within your vault of the library to be imported, as well as the relative path within your vault of the folder where you would like the literature notes to be stored. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero'.
-
-![](/images/Export_Zotero.jpg)
+- in the plugin settings within Obsidian add the relative path within your vault of the library to be imported, as well as the relative path within your vault of the folder where you would like the literature notes to be stored. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero').
 
 ## Commands
 
 The plugin includes the original note-generation workflow together with the new library view workflow:
 
 - **Create/Update Literature Note**: when you select this command you will be prompted to chose one of references from the library you have imported. If the reference has not been imported yet in the specified folder, a new note will be generated. If a note already exists, its content will be updated without over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
-
-![](/images/SelectCommandExample.png)
 
 - **Update Library**: when you select this command, the plugin will generate/update all the notes that have been modified from Zotero since the last time the same command was selected. If this is the first time that you select this command, then the plugin will create/update literature notes for all the entries in the imported bibliography.
 
@@ -183,23 +187,13 @@ It is possible to perform additional transformations to designated highlighted s
 
 - **Heading**: Turn highlighted text into a heading (Level 1 to 6).
 
-![](/images/exampleHeading.png)
-
 - **MergeAbove**: Append highlight to the previous one (e.g. to merge paragraph across two pages).
-
-![](/images/exampleMergeAbove.jpg)
 
 - **Preprend Comment**: Place the text of the comment at the beginning of the highlight (rather than at the end as by default).
 
-![](/images/exampleCommentPrepend.jpg)
-
 - **Keyword**: Add the highlighted text to the list of keywords listed under the ({{keywords}}) placeholder in the template.
 
-![](/images/exampleKeyword.png)
-
 - **Todo**: Transform the highlight or comments into a task ("- [ ]").
-
-![](/images/exampleToDo.png)
 
 - **Custom Text**: Add custom text before or after a specific highlight
 
