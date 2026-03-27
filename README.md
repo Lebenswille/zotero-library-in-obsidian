@@ -1,3 +1,5 @@
+> Note: This plugin is vibe coded.
+
 # Zotero Library in Obsidian
 
 This project is modified from the original [bibnotes](https://github.com/stefanopagliari/bibnotes) project by Stefano Pagliari, and is maintained at [Lebenswille/zotero-library-in-obsidian](https://github.com/Lebenswille/zotero-library-in-obsidian).
