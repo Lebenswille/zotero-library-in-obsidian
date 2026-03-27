@@ -4851,8 +4851,16 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     });
   }
   removeHeaderLibraryButtons() {
-    document.querySelectorAll(`#${ZOTERO_LIBRARY_HEADER_BUTTON_ID}`).forEach((element) => {
-      element.remove();
+    const markdownLeaves = this.app.workspace.getLeavesOfType("markdown");
+    markdownLeaves.forEach((leaf) => {
+      var _a;
+      const actionsEl = (_a = leaf.view) == null ? void 0 : _a.actionsEl;
+      if (!actionsEl) {
+        return;
+      }
+      actionsEl.querySelectorAll(`#${ZOTERO_LIBRARY_HEADER_BUTTON_ID}`).forEach((element) => {
+        element.remove();
+      });
     });
   }
   initHeaderLibraryButton() {
@@ -4871,7 +4879,10 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     if (!actionsEl) {
       return;
     }
-    const buttonContainer = document.createElement("div");
+    actionsEl.querySelectorAll(`#${ZOTERO_LIBRARY_HEADER_BUTTON_ID}`).forEach((element) => {
+      element.remove();
+    });
+    const buttonContainer = actionsEl.ownerDocument.createElement("div");
     buttonContainer.id = ZOTERO_LIBRARY_HEADER_BUTTON_ID;
     buttonContainer.addClass("clickable-icon");
     buttonContainer.addClass("view-action");
