@@ -171,6 +171,11 @@ This fork also adds YAML-friendly wikilink list placeholders for Obsidian Proper
   - "[[Collection A]]"
   - "[[Collection B]]"
   ```
+- `{{zoteroReaderLinkYamlList}}`: exports zoteroReaderLinks as:
+  ```yaml
+  - "[Title A](zotero://open-pdf/library/items/<item-id>)"
+  - "[Title B](zotero://open-pdf/library/items/<item-id>)"
+  ```
 
 ### Note Title
 Specify the format of the note title (e.g., `{{citeKey}}`, `{{title}}`, `{{author}}`).
