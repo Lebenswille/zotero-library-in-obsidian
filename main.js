@@ -871,7 +871,7 @@ function extend(destination) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i];
     for (var key in source) {
-      if (source.hasOwnProperty(key))
+      if (Object.prototype.hasOwnProperty.call(source, key))
         destination[key] = source[key];
     }
   }
@@ -892,97 +892,18 @@ function trimTrailingNewlines(string) {
 function trimNewlines(string) {
   return trimTrailingNewlines(trimLeadingNewlines(string));
 }
-var blockElements = [
-  "ADDRESS",
-  "ARTICLE",
-  "ASIDE",
-  "AUDIO",
-  "BLOCKQUOTE",
-  "BODY",
-  "CANVAS",
-  "CENTER",
-  "DD",
-  "DIR",
-  "DIV",
-  "DL",
-  "DT",
-  "FIELDSET",
-  "FIGCAPTION",
-  "FIGURE",
-  "FOOTER",
-  "FORM",
-  "FRAMESET",
-  "H1",
-  "H2",
-  "H3",
-  "H4",
-  "H5",
-  "H6",
-  "HEADER",
-  "HGROUP",
-  "HR",
-  "HTML",
-  "ISINDEX",
-  "LI",
-  "MAIN",
-  "MENU",
-  "NAV",
-  "NOFRAMES",
-  "NOSCRIPT",
-  "OL",
-  "OUTPUT",
-  "P",
-  "PRE",
-  "SECTION",
-  "TABLE",
-  "TBODY",
-  "TD",
-  "TFOOT",
-  "TH",
-  "THEAD",
-  "TR",
-  "UL"
-];
+var blockElements = ["ADDRESS", "ARTICLE", "ASIDE", "AUDIO", "BLOCKQUOTE", "BODY", "CANVAS", "CENTER", "DD", "DIR", "DIV", "DL", "DT", "FIELDSET", "FIGCAPTION", "FIGURE", "FOOTER", "FORM", "FRAMESET", "H1", "H2", "H3", "H4", "H5", "H6", "HEADER", "HGROUP", "HR", "HTML", "ISINDEX", "LI", "MAIN", "MENU", "NAV", "NOFRAMES", "NOSCRIPT", "OL", "OUTPUT", "P", "PRE", "SECTION", "TABLE", "TBODY", "TD", "TFOOT", "TH", "THEAD", "TR", "UL"];
 function isBlock(node) {
   return is(node, blockElements);
 }
-var voidElements = [
-  "AREA",
-  "BASE",
-  "BR",
-  "COL",
-  "COMMAND",
-  "EMBED",
-  "HR",
-  "IMG",
-  "INPUT",
-  "KEYGEN",
-  "LINK",
-  "META",
-  "PARAM",
-  "SOURCE",
-  "TRACK",
-  "WBR"
-];
+var voidElements = ["AREA", "BASE", "BR", "COL", "COMMAND", "EMBED", "HR", "IMG", "INPUT", "KEYGEN", "LINK", "META", "PARAM", "SOURCE", "TRACK", "WBR"];
 function isVoid(node) {
   return is(node, voidElements);
 }
 function hasVoid(node) {
   return has(node, voidElements);
 }
-var meaningfulWhenBlankElements = [
-  "A",
-  "TABLE",
-  "THEAD",
-  "TBODY",
-  "TFOOT",
-  "TH",
-  "TD",
-  "IFRAME",
-  "SCRIPT",
-  "AUDIO",
-  "VIDEO"
-];
+var meaningfulWhenBlankElements = ["A", "TABLE", "THEAD", "TBODY", "TFOOT", "TH", "TD", "IFRAME", "SCRIPT", "AUDIO", "VIDEO"];
 function isMeaningfulWhenBlank(node) {
   return is(node, meaningfulWhenBlankElements);
 }
@@ -996,6 +917,12 @@ function has(node, tagNames) {
   return node.getElementsByTagName && tagNames.some(function(tagName) {
     return node.getElementsByTagName(tagName).length;
   });
+}
+var markdownEscapes = [[/\\/g, "\\\\"], [/\*/g, "\\*"], [/^-/g, "\\-"], [/^\+ /g, "\\+ "], [/^(=+)/g, "\\$1"], [/^(#{1,6}) /g, "\\$1 "], [/`/g, "\\`"], [/^~~~/g, "\\~~~"], [/\[/g, "\\["], [/\]/g, "\\]"], [/^>/g, "\\>"], [/_/g, "\\_"], [/^(\d+)\. /g, "$1\\. "]];
+function escapeMarkdown(string) {
+  return markdownEscapes.reduce(function(accumulator, escape) {
+    return accumulator.replace(escape[0], escape[1]);
+  }, string);
 }
 var rules = {};
 rules.paragraph = {
@@ -1096,13 +1023,10 @@ rules.inlineLink = {
     return options.linkStyle === "inlined" && node.nodeName === "A" && node.getAttribute("href");
   },
   replacement: function(content, node) {
-    var href = node.getAttribute("href");
-    if (href)
-      href = href.replace(/([()])/g, "\\$1");
-    var title = cleanAttribute(node.getAttribute("title"));
-    if (title)
-      title = ' "' + title.replace(/"/g, '\\"') + '"';
-    return "[" + content + "](" + href + title + ")";
+    var href = escapeLinkDestination(node.getAttribute("href"));
+    var title = escapeLinkTitle(cleanAttribute(node.getAttribute("title")));
+    var titlePart = title ? ' "' + title + '"' : "";
+    return "[" + content + "](" + href + titlePart + ")";
   }
 };
 rules.referenceLink = {
@@ -1110,10 +1034,10 @@ rules.referenceLink = {
     return options.linkStyle === "referenced" && node.nodeName === "A" && node.getAttribute("href");
   },
   replacement: function(content, node, options) {
-    var href = node.getAttribute("href");
+    var href = escapeLinkDestination(node.getAttribute("href"));
     var title = cleanAttribute(node.getAttribute("title"));
     if (title)
-      title = ' "' + title + '"';
+      title = ' "' + escapeLinkTitle(title) + '"';
     var replacement;
     var reference2;
     switch (options.linkReferenceStyle) {
@@ -1180,15 +1104,22 @@ rules.code = {
 rules.image = {
   filter: "img",
   replacement: function(content, node) {
-    var alt = cleanAttribute(node.getAttribute("alt"));
-    var src = node.getAttribute("src") || "";
+    var alt = escapeMarkdown(cleanAttribute(node.getAttribute("alt")));
+    var src = escapeLinkDestination(node.getAttribute("src") || "");
     var title = cleanAttribute(node.getAttribute("title"));
-    var titlePart = title ? ' "' + title + '"' : "";
+    var titlePart = title ? ' "' + escapeLinkTitle(title) + '"' : "";
     return src ? "![" + alt + "](" + src + titlePart + ")" : "";
   }
 };
 function cleanAttribute(attribute) {
   return attribute ? attribute.replace(/(\n+\s*)+/g, "\n") : "";
+}
+function escapeLinkDestination(destination) {
+  var escaped = destination.replace(/([<>()])/g, "\\$1");
+  return escaped.indexOf(" ") >= 0 ? "<" + escaped + ">" : escaped;
+}
+function escapeLinkTitle(title) {
+  return title.replace(/"/g, '\\"');
 }
 function Rules(options) {
   this.options = options;
@@ -1411,7 +1342,10 @@ function isBlank(node) {
 }
 function flankingWhitespace(node, options) {
   if (node.isBlock || options.preformattedCode && node.isCode) {
-    return { leading: "", trailing: "" };
+    return {
+      leading: "",
+      trailing: ""
+    };
   }
   var edges = edgeWhitespace(node.textContent);
   if (edges.leadingAscii && isFlankedByWhitespace("left", node, options)) {
@@ -1420,7 +1354,10 @@ function flankingWhitespace(node, options) {
   if (edges.trailingAscii && isFlankedByWhitespace("right", node, options)) {
     edges.trailing = edges.trailingNonAscii;
   }
-  return { leading: edges.leading, trailing: edges.trailing };
+  return {
+    leading: edges.leading,
+    trailing: edges.trailing
+  };
 }
 function edgeWhitespace(string) {
   var m = string.match(/^(([ \t\r\n]*)(\s*))(?:(?=\S)[\s\S]*\S)?((\s*?)([ \t\r\n]*))$/);
@@ -1456,21 +1393,6 @@ function isFlankedByWhitespace(side, node, options) {
   return isFlanked;
 }
 var reduce = Array.prototype.reduce;
-var escapes = [
-  [/\\/g, "\\\\"],
-  [/\*/g, "\\*"],
-  [/^-/g, "\\-"],
-  [/^\+ /g, "\\+ "],
-  [/^(=+)/g, "\\$1"],
-  [/^(#{1,6}) /g, "\\$1 "],
-  [/`/g, "\\`"],
-  [/^~~~/g, "\\~~~"],
-  [/\[/g, "\\["],
-  [/\]/g, "\\]"],
-  [/^>/g, "\\>"],
-  [/_/g, "\\_"],
-  [/^(\d+)\. /g, "$1\\. "]
-];
 function TurndownService(options) {
   if (!(this instanceof TurndownService))
     return new TurndownService(options);
@@ -1534,9 +1456,7 @@ TurndownService.prototype = {
     return this;
   },
   escape: function(string) {
-    return escapes.reduce(function(accumulator, escape) {
-      return accumulator.replace(escape[0], escape[1]);
-    }, string);
+    return escapeMarkdown(string);
   }
 };
 function process(parentNode) {
@@ -1579,7 +1499,6 @@ function join(output, replacement) {
 function canConvert(input) {
   return input != null && (typeof input === "string" || input.nodeType && (input.nodeType === 1 || input.nodeType === 9 || input.nodeType === 11));
 }
-var turndown_browser_es_default = TurndownService;
 
 // src/main.ts
 init_constants();
@@ -1962,6 +1881,22 @@ function createZoteroReaderPathLink(reference2) {
   }
   const filesPathListString = filesPathList.join("; ");
   return filesPathListString;
+}
+function createZoteroReaderPathLinkYamlList(reference2) {
+  if (reference2.attachments.length == 0)
+    return "{{localFilePathLink}}";
+  const filesPathList = [];
+  for (let attachmentindex = 0; attachmentindex < reference2.attachments.length; attachmentindex++) {
+    if (reference2.attachments[attachmentindex].itemType !== "attachment")
+      continue;
+    if (reference2.attachments[attachmentindex].select == void 0) {
+      reference2.attachments[attachmentindex].select = "";
+    }
+    const selectedFilePath = "[" + reference2.attachments[attachmentindex].title + "](" + encodeURI(reference2.attachments[attachmentindex].select).replace("select", "open-pdf") + ")";
+    filesPathList.push(selectedFilePath);
+  }
+  const filesPathYamlListString = String(filesPathList.map((tag) => `- "${tag}"`).join("\n"));
+  return filesPathYamlListString;
 }
 function createNoteTitle(selectedEntry, exportTitle, exportPath) {
   exportTitle = exportTitle.replace("{{citeKey}}", selectedEntry.citationKey);
@@ -5371,6 +5306,8 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     console.log(selectedEntry.filePath);
     selectedEntry.zoteroReaderLink = createZoteroReaderPathLink(selectedEntry);
     console.log(selectedEntry.zoteroReaderLink);
+    selectedEntry.zoteroReaderLinkYamlList = createZoteroReaderPathLinkYamlList(selectedEntry);
+    console.log(selectedEntry.zoteroReaderLinkYamlList);
     const entriesArray = Object.keys(selectedEntry);
     note = replaceAllTemplates(entriesArray, note, selectedEntry);
     note = note.replace(/```/g, "HEREISAPLACEHOLDERFORBACKTICK");
@@ -5509,7 +5446,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return noteElements;
   }
   parseAnnotationLinesintoElementsUserNote(note) {
-    const turndownService = new turndown_browser_es_default();
+    const turndownService = new TurndownService();
     note = turndownService.turndown(note);
     note = note.replace(/`/g, "'").replace(/, p. p. /g, ", p. ").trim();
     const lines = note.split(/<\/h1>|\n\n|<\/p>/gm);

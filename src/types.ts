@@ -125,6 +125,7 @@ export interface Reference {
 	file: string;
 	filePath: string;
 	zoteroReaderLink: string;
+	zoteroReaderLinkYamlList: string;
 	localLibrary: string;
 	localLibraryLink: string;
 	select: string;

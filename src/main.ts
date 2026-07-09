@@ -39,6 +39,7 @@ import {
 	createLocalFileLink,
 	createLocalFilePathLink,
 	createZoteroReaderPathLink,
+	createZoteroReaderPathLinkYamlList,
 	createCreatorList,
 	createNoteTitle,
 	makeWiki,
@@ -1226,7 +1227,8 @@ export default class MyPlugin extends Plugin {
 		console.log(selectedEntry.filePath)
 		selectedEntry.zoteroReaderLink = createZoteroReaderPathLink(selectedEntry);
 		console.log(selectedEntry.zoteroReaderLink)
-
+		selectedEntry.zoteroReaderLinkYamlList = createZoteroReaderPathLinkYamlList(selectedEntry);
+		console.log(selectedEntry.zoteroReaderLinkYamlList)
 
 
 		// Create an array with all the fields
